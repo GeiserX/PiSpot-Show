@@ -1,0 +1,14 @@
+[Unit]
+Description=PiSpot_HDMI Service
+Before=network-pre.target
+Wants=network-pre.target
+
+[Service]
+Type=simple
+User=mm
+WorkingDirectory=/opt/PiSpot_HDMI
+ExecStart=/usr/bin/python3 /opt/PiSpot_HDMI/main.py
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
