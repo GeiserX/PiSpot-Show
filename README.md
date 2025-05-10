@@ -8,7 +8,6 @@ HDMI-Connected IoT device based on Raspberry Pi with PiJuice to provide Wi-Fi vo
 
 ## Table of Contents
 
-- [Assembly video](#assembly)
 - [Maintainers](#maintainers)
 - [Contributing](#contributing)
 
