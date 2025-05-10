@@ -1,0 +1,165 @@
+---
+- hosts: PiSpot_HDMI
+
+  tasks:
+  - name: Update and upgrade apt packages
+    apt:
+      upgrade: yes
+      update_cache: yes
+      cache_valid_time: 2592000 #One month
+
+  - name: Set Timezone
+    timezone:
+      name: America/Guadeloupe
+
+  - name: Set GPU memory to 64MB
+    lineinfile:
+      path: "/boot/config.txt"
+      regexp: "^gpu_mem"
+      line: "gpu_mem=64"
+
+  - name: Save battery by switching off the USB ports
+    lineinfile:
+      path: /etc/rc.local
+      line: 'echo 0 | tee /sys/devices/platform/soc/3f980000.usb/buspower'
+      insertafter: '#!/bin/sh -e'
+
+
+
+  - name: Begin installing dependencies for graphics manipulation 
+    apt: 
+      name: "{{ packages }}"
+    vars:
+      packages:
+      - fbi
+      - git
+      - python3-pip
+      - imagemagick
+      - python-setuptools # Needed later
+      - pijuice-base # Needed later
+      - python3-smbus # Needed later
+
+  - name: Install Python3 requests
+    pip:
+      executable: pip3
+      name: requests
+
+  - name: Add user "gpconnect" to sudo
+    lineinfile:
+      path: /etc/sudoers.d/gpconnect
+      line: 'gpconnect ALL=NOPASSWD: /sbin/reboot, /usr/bin/killall, /usr/bin/fbi, /bin/systemctl restart PiSpot_HDMI.service, /bin/systemctl start PiSpot_HDMI.service, /bin/systemctl stop PiSpot_HDMI.service'
+      state: present
+      mode: 0440
+      create: yes
+      validate: 'visudo -cf %s'
+
+  - name: Generate certificate ECDSA
+    user:
+      name: gpconnect
+      group: gpconnect
+      generate_ssh_key: yes
+      ssh_key_type: ecdsa
+      ssh_key_bits: 521
+      ssh_key_file: .ssh/id_ecdsa
+
+#  - name: Copy the certificate to the gpconnect user ### Uncomment this part when Ansible in 02/05/2019 becomes 2.8, the feature will be added. Now recursively copying using remote_src: yes is not allowed.
+#    copy:
+#      remote_src: yes
+#      src: /home/gpconnect/.ssh/
+#      dest: /root/.ssh/
+#      owner: root
+#      directory_mode: yes
+  - name: Copy the certificate to the root user 
+    command: cp -r /home/gpconnect/.ssh/. /root/.ssh/
+  - name: Change ownership of the certificates
+    file:
+      path: /home/root/.ssh/
+      owner: root
+      group: root
+      recurse: yes
+
+  - name: Copy Python script which will upload the certificate and change the hostname
+    copy:
+      src: /home/ubuntu/deployment-files/PiSpot_Voucher/GitLabANDHostname.py
+      dest: /tmp/GitLabANDHostname.py
+      owner: root
+      group: root
+      mode: a+x
+
+  - name: Execute the copied file
+    command: python3 /tmp/GitLabANDHostname.py  
+
+  - name: Clone the PiSpot_Voucher main code
+    git:
+      depth: 1
+      repo: 'git@gitlab.com:DrumSergio/PiSpot_HDMI.git'
+      dest: /opt/PiSpot_HDMI
+      key_file: /root/.ssh/id_ecdsa 
+      accept_hostkey: yes
+
+  - name: Change permissions so as to run it from gpconnect user
+    file:
+      path: /opt/PiSpot_HDMI
+      owner: gpconnect
+      group: gpconnect
+      recurse: yes
+
+  - name: Copy sshbanner
+    copy:
+      remote_src: yes
+      src: /opt/PiSpot_HDMI/sshbanner
+      dest: /home/gpconnect/.ssh/sshbanner
+
+#  - name: Copy service files ### Uncomment this part when Ansible in 02/05/2019 becomes 2.8, the feature will be added. Now recursively copying using remote_src to yes is not allowed. When doing this, comment the following 2 lines down.
+#    copy:
+#      remote_src: yes
+#      src: /opt/PiSpot_HDMI/servicefiles
+#      dest: /etc/systemd/system/
+#      directory_mode: yes
+  - name: Copy service files
+    command: cp -r /opt/PiSpot_HDMI/servicefiles/. /etc/systemd/system/
+
+  - name: Enable the 2 service files
+    systemd:
+      name: "{{ item }}"
+      enabled: yes
+      state: started
+    with_items:
+    - splashscreen.service
+    - pispot_hdmi.service
+
+  - name: Enable the 2 service files
+    systemd:
+      name: "{{ item }}"
+      enabled: yes
+      state: started
+    with_items:
+    - splashscreen.service
+    - pispot_hdmi.service
+
+  - name: Copy wpa_supplicant.conf
+    copy:
+      src: /home/ubuntu/deployment-files/PiSpot_HDMI/wpa_supplicant.conf
+      dest: /etc/wpa_supplicant/wpa_supplicant.conf
+      owner: root
+      group: root
+      mode: 0644
+      backup: yes # Just in case something fails
+
+# Not finished... pijuice_cli binary now
+
+  - name: Copy pijuice.py to Python3 directory
+    copy:
+      remote_src: yes
+      src: /usr/lib/python2.7/dist-packages/pijuice.py
+      dest: /usr/lib/python3/dist-packages/pijuice.py
+
+
+  - name: Copy pijuice.py to Python3 directory
+    copy:
+      remote_src: yes
+      src: /opt/PiSpot_HDMI/pijuice_config.JSON
+      dest: /var/lib/pijuice/
+
+  - name: Add stop time to crontab
+# “crontab -e” and add the following line: “0 17 * * * /usr/bin/python3 /opt/PiSpot_HDMI/piJuice_stop.py” to the crontab. Also enter to “pijuice_cli.py” and then set the WakeUp Alarm to 9:00 on weekdays
