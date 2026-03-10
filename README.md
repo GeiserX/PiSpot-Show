@@ -48,6 +48,37 @@ Originally developed and deployed in 2018 for the company GPConnect. Part of the
 
 ---
 
+## Videos
+
+### In Action
+
+[![PiSpot Show In Action](http://img.youtube.com/vi/Uocjf3nof9g/0.jpg)](http://www.youtube.com/watch?v=Uocjf3nof9g "PiSpot Show In Action")
+
+### Assembly
+
+[![PiSpot Show Assembly](http://img.youtube.com/vi/0NGtbnZm6PA/0.jpg)](http://www.youtube.com/watch?v=0NGtbnZm6PA "PiSpot Show Assembly")
+
+---
+
+## Photos
+
+<p align="center">
+  <img src="docs/photos/hdmi-display-voucher-rain-weather.jpg" width="400" alt="HDMI display showing voucher with rain weather"/>
+  <img src="docs/photos/hdmi-display-voucher-sunny-weather.jpg" width="400" alt="HDMI display showing voucher with sunny weather"/>
+</p>
+<p align="center">
+  <img src="docs/photos/pi3-pijuice-hat-in-case.jpg" width="300" alt="Raspberry Pi 3 with PiJuice HAT"/>
+  <img src="docs/photos/blue-case-buttons-front.jpg" width="300" alt="Blue 3D-printed case with buttons"/>
+</p>
+<p align="center">
+  <img src="docs/photos/white-case-buttons-side.jpg" width="300" alt="White case with buttons"/>
+  <img src="docs/photos/three-blue-cases-fleet.jpg" width="300" alt="Fleet of three blue cases"/>
+</p>
+
+See all photos in [`docs/photos/`](docs/photos/).
+
+---
+
 ## Architecture
 
 ```
